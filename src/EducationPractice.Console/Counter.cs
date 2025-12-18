@@ -8,10 +8,9 @@ public class Counter
     public const string Quit = "q";
     public const string Reset = "00";
     int goal = 0;
-    string input = string.Empty;
     bool isGoalReached = false;
 
-    public void Start()
+    public async Task Start(IConsumer<byte[]> consumer)
     {
         bool isEnd = false;
         int resultSum = 0;
@@ -25,8 +24,12 @@ public class Counter
 
         while (isEnd is false)
         {
+            var message = await consumer.ReceiveAsync();
+            var messageData = Encoding.UTF8.GetString(message.Data);
+
+            var input = messageData;
+
             Console.ForegroundColor = ConsoleColor.White;
-            input = Console.ReadLine() ?? string.Empty;
 
             if (input == Quit)
             {
@@ -34,17 +37,19 @@ public class Counter
                 break;
             }
 
+            ResetCounterToZero(resultSum, input);
+
             if (int.TryParse(input, out int number) is false)
             {
                 Console.WriteLine($"[INVALID TYPE] - {input}. Please enter a number!");
                 continue;
             }
 
-            ResetCounterToZero(resultSum);
-
             resultSum += number;
-            Compare(previusSum, resultSum);
+            Compare(previusSum, resultSum, input);
             previusSum += number;
+
+            await consumer.AcknowledgeAsync(message.MessageId);
         }
 
         Console.WriteLine($"GENERAL SUM: {resultSum}");
@@ -68,7 +73,7 @@ public class Counter
         return 0;
     }
 
-    private void ResetCounterToZero(int resultSum)
+    private void ResetCounterToZero(int resultSum, string input)
     {
         if (input == Reset)
         {
@@ -98,7 +103,7 @@ public class Counter
         }
     }
 
-    private void Compare(int previousSum, int resultSum)
+    private void Compare(int previousSum, int resultSum, string input)
     {
         if (resultSum > previousSum)
         {
