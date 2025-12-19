@@ -10,7 +10,7 @@ public class ProducerFactory
         SubscriptionName = subName;
     }
 
-    public async void StartMessaging()
+    public async Task StartMessaging()
     {
         try
         {
