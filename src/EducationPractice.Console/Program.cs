@@ -9,10 +9,38 @@
         counter.OnNumDecreased += (message) => Console.WriteLine(message);
         counter.OnGoalLost += (message) => Console.WriteLine(message);
 
-        var consumerFactory = new ConsumerFactory("persistent://public/default/mytopic", "Sub1");
+        var config = new ConfigurationBuilder()
+            .SetBasePath(AppContext.BaseDirectory)
+            .AddJsonFile("appsettings.json")
+            .Build();
 
-        var consumer = await consumerFactory.CreateConsumer();
+        var pulsarSettings = config.GetSection("PulsarConfig");
 
-        await counter.Start(consumer);
+        var topic = pulsarSettings["Topic"] ?? "persistent://public/default/myTopic";
+        var subName = pulsarSettings["SubscriptionName"] ?? "Sub1";
+        var serviceUrl = pulsarSettings["ServiceUrl"] ?? "pulsar://localhost:6650";
+
+        if (args.Length == 0)
+        {
+            Console.WriteLine("Usage: dotnet run [p || c] \np - for producer\nc - for consumer");
+        }
+
+        var mode = args[0];
+
+        if (mode is "p")
+        {
+            var producer = new ProducerFactory(topic, serviceUrl);
+            await producer.StartMessaging();
+        }
+        else if (mode is "c")
+        {
+            var consumerFactory = new ConsumerFactory(topic, subName, serviceUrl);
+            var consumer = await consumerFactory.CreateConsumer();
+            await counter.Start(consumer);
+        }
+        else
+        {
+            Console.WriteLine($"Unknown mode: {mode}. Use [c] or [p]");
+        }
     }
 }
