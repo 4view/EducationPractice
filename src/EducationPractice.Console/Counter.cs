@@ -50,6 +50,7 @@ public class Counter
             previusSum += number;
 
             await consumer.AcknowledgeAsync(message.MessageId);
+            // await consumer.NegativeAcknowledge(message.MessageId);
         }
 
         Console.WriteLine($"GENERAL SUM: {resultSum}");

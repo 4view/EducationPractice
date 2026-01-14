@@ -26,6 +26,7 @@ public class ConsumerFactory
             .SubscriptionName(SubscriptionName)
             .Topic(Topic)
             .SubscriptionType(SubscriptionType.Shared)
+            .NegativeAckRedeliveryDelay(TimeSpan.FromSeconds(30))
             .SubscribeAsync();
 
         return consumer;
